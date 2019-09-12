@@ -1,0 +1,269 @@
+import curses
+import pickle
+import string  # Serialization module for python
+
+
+class Document:
+    """Pages are presumed to have dimensions of 80 wide by 20 tall."""
+
+    def __init__(self, filename=None):
+        self.filename = filename if filename else "binary.bindoc"
+        self.pages = []
+        self.current = 0
+        self.addPage()
+
+    def addPage(self):
+        self.pages.append(["".ljust(80) for i in range(20)])
+        self.nextPage()
+
+    def delPage(self):
+        self.pages.pop(self.current)
+        if len(self.pages) <= 0:
+            self.addPage()
+        else:
+            self.prevPage()
+
+    def setChr(self, r, c, ltr):
+        self.pages[self.current][r] = self.pages[self.current][r][:c] + ltr + self.pages[self.current][r][c + 1:]
+
+    def nextPage(self):
+        self.current = (self.current + 1) % len(self.pages)
+
+    def prevPage(self):
+        self.current = (self.current - 1 + len(self.pages)) % len(self.pages)
+
+    def __str__(self):
+        return "\n".join(self.pages[self.current])
+
+
+d = Document()
+class Tree:
+    def __init__(self, filename=None,parent=None,left=None, middle=None,right=None):
+        self.filename = filename
+        self.parent=parent
+        self.left  = left
+        self.middle=middle
+        self.right = right
+    def __str__(self):
+        return str(self.filename)
+    def addfull(self, input):
+        if (self.left == None):
+            self.left = Tree(input)
+        elif (self.middle == None):
+            self.middle = Tree(input)
+        elif (self.right == None):
+            self.right = Tree(input)
+    def findparent(self,baba,current):
+        if(self.left.filename==baba):
+            self.left.addfull(current)
+        if(self.middle.filename==baba):
+            self.middle.addfull(current)
+        if(self.right.filename==baba):
+            self.right.addfull(current)
+
+t= Tree()
+def drawscreen(scr, doc):
+    height, width = scr.getmaxyx()
+    if height < 24 or width < 80:
+        scr.move(0, 0)
+        scr.erase()
+        curses.doupdate()
+        return
+    pos_r, pos_c = curses.getsyx()
+    scr.hline(20, 0, '~', width)
+    pos_p = str(doc.current + 1) + '/' + str(len(doc.pages)) # Not displaying zero-based indexing
+    scr.addstr(20, width - len(pos_p), pos_p)
+
+    commands = [["^C: Quit", "^O: Story save", "^L: Story load"],
+                ["^X: Back to write","^V: Set Node"]]
+
+    for r in range(2):
+        ct = 0
+        for cmd in commands[r]:
+            scr.addstr(21 + r, ct * 20 + 5, cmd, curses.A_REVERSE)
+            ct += 1
+    if width > 80:
+        for row in range(height - 4):
+            scr.addstr(row, 80, " " * (width - 80), curses.A_REVERSE)
+    scr.move(0, 0)
+    lines = str(doc).split('\n')
+    for line in range(len(lines)):
+        scr.addstr(line, 0, lines[line])
+    scr.move(pos_r, pos_c)
+
+
+def sizecheck(scr):
+    h, w = scr.getmaxyx()
+    return h, w, h >= 24 and w >= 80
+
+
+def main(stdscr):
+    global d
+    global t
+    stdscr.clear()
+    drawscreen(stdscr, d)
+    stdscr.move(0, 0)
+    s_height, s_width, enabled = sizecheck(stdscr)
+    flag = 0
+    stdscr.addstr("File build: ")
+    while True:
+        if (flag == 0):
+            stdscr.addstr(" enter file number:")
+            flag = 1
+            e = stdscr.getch() - 48
+            e1 = ".bindoc"
+            e2 = str(e) + e1
+            stdscr.addstr(str(e))
+            d.filename = e2
+            stdscr.addstr(" file")
+            stdscr.move(0+ 1, 0)
+        c = stdscr.getch()
+        if enabled:
+            if c == curses.KEY_UP:
+                pos_r, pos_c = curses.getsyx()
+                pos_r = max(pos_r - 1, 0)
+                stdscr.move(pos_r, pos_c)
+            elif c == curses.KEY_DOWN:
+                pos_r, pos_c = curses.getsyx()
+                pos_r = min(pos_r + 1, 19)
+                stdscr.move(pos_r, pos_c)
+            elif c == curses.KEY_LEFT:
+                pos_r, pos_c = curses.getsyx()
+                pos_c = max(pos_c - 1, 0)
+                stdscr.move(pos_r, pos_c)
+            elif c == curses.KEY_RIGHT:
+                pos_r, pos_c = curses.getsyx()
+                pos_c = min(pos_c + 1, 79)
+                stdscr.move(pos_r, pos_c)
+            elif c >= 32 and c <= 126:
+                pos_r, pos_c = curses.getsyx()
+                stdscr.addstr(pos_r, pos_c, chr(c))
+                d.setChr(pos_r, pos_c, chr(c))
+                if pos_r >= 19 and pos_c >= 79:
+                    stdscr.move(pos_r, pos_c)
+            elif c == curses.KEY_HOME:
+                pos_c = 0
+                stdscr.move(pos_r, pos_c)
+            elif c == curses.KEY_END:
+                pos_c = 79
+                stdscr.move(pos_r, pos_c)
+            elif c == curses.KEY_PPAGE:
+                d.prevPage()
+                drawscreen(stdscr, d)
+                pos_r, pos_c = 0, 0
+                stdscr.move(pos_r, pos_c)
+            elif c == curses.KEY_NPAGE:
+                d.nextPage()
+                drawscreen(stdscr, d)
+                pos_r, pos_c = 0, 0
+                stdscr.move(pos_r, pos_c)
+            elif c == curses.KEY_IC:
+                d.addPage()
+                drawscreen(stdscr, d)
+                pos_r, pos_c = 0, 0
+                stdscr.move(pos_r, pos_c)
+            elif c == curses.KEY_DC:
+                d.delPage()
+                drawscreen(stdscr, d)
+                pos_r, pos_c = 0, 0
+                stdscr.move(pos_r, pos_c)
+            elif c == curses.KEY_BACKSPACE or curses.keyname(c) == '^H':
+                pos_r, pos_c = curses.getsyx()
+                pos_c -= 1
+                if pos_c < 0:
+                    pos_c = s_width - 1
+                    pos_r -= 1
+                    if pos_r < 0:
+                        pos_r = 0
+                        pos_c = 0
+                stdscr.addch(pos_r, pos_c, 32)
+                d.setChr(pos_r, pos_c, ' ')
+                stdscr.move(pos_r, pos_c)
+            elif curses.keyname(c) == '^X':
+                d.delPage()
+                drawscreen(stdscr, d)
+                stdscr.move(0,0)
+                stdscr.addstr("File build: ")
+                flag=0;
+            elif curses.keyname(c) == '^V':
+                tempfilename=d.filename
+                d.delPage()
+                drawscreen(stdscr, d)
+                stdscr.move(0, 0)
+                stdscr.addstr("Enter parent: ")
+                parent = stdscr.getch()-48
+                stdscr.addstr(str(parent))
+                stdscr.addstr(" is parent ")
+                i=0
+                children=[]
+                while(i<3):
+                    pos_r, pos_c = curses.getsyx()
+                    stdscr.move(pos_r+1,0)
+                    stdscr.addstr("Enter which child: ")
+                    child = stdscr.getch()
+                    if(child==10):
+                        tempchild=None
+                        children.append(tempchild)
+                    else:
+                        child=child-48
+                        stdscr.addstr(str(child))
+                        stdscr.addstr(" is child ")
+                        tempchild=str(child)
+                        children.append(tempchild)
+                    i=i+1
+                c=stdscr.getch()
+                if(c==10):
+                    t1=Tree(children[0])
+                    t2=Tree(children[1])
+                    t3=Tree(children[2])
+                    t.addfull(t1)
+                    t.addfull(t2)
+                    t.addfull(t3)
+                    
+                    print(t)
+                    print(t.left.filename)
+                    print(t.middle.filename)
+                    print(t.right.filename)
+                #http://www.openbookproject.net/thinkcs/python/english2e/ch21.html
+                #https://stackoverflow.com/questions/2358045/how-can-i-implement-a-tree-in-python-are-there-any-built-in-data-structures-in
+            elif c == 10:  # linefeed
+                pos_r, pos_c = curses.getsyx()
+                pos_c = 0
+                pos_r = min(pos_r + 1, 19)
+                stdscr.move(pos_r, pos_c)
+            elif curses.keyname(c) == '^L':
+                try:
+                    f = open(d.filename, 'r')
+                    d = pickle.load(f)
+                    f.close()
+                except IOError:
+                    pass
+                drawscreen(stdscr, d)
+            elif curses.keyname(c) == '^O':
+                f = open(d.filename, 'w')
+                pickle.dump(d, f)
+                #if(t.left==None):
+                #   t.filename=str(d.filename)
+                #elif(t.middle==None):
+                #   t.filename=str(d.filename)
+                #elif(t.right==None):
+                #   t.filename=str(d.filename)
+                #else
+                #   t.left=Tree()
+                f.close()
+            elif c == curses.KEY_RESIZE:
+                s_height, s_width, enabled = sizecheck(stdscr)
+                drawscreen(stdscr, d)
+
+        else:
+            if c == curses.KEY_RESIZE:
+                s_height, s_width, enabled = sizecheck(stdscr)
+                drawscreen(stdscr, d)
+        curses.doupdate()
+
+
+try:
+    curses.wrapper(main)
+    pass
+except KeyboardInterrupt:
+    pass

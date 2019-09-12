@@ -1,0 +1,46 @@
+class Tree:
+    def __init__(self, filename=None,parent=None,left=None, middle=None,right=None):
+        self.filename = filename
+        self.parent=parent
+        self.left  = left
+        self.middle=middle
+        self.right = right
+    def __str__(self):
+        return str(self.filename)
+    def addfull(self, input):
+        if (self.left == None):
+            self.left = Tree(input)
+        elif (self.middle == None):
+            self.middle = Tree(input)
+        elif (self.right == None):
+            self.right = Tree(input)
+        else
+            self.addfull(input)
+    def findparent(self,baba,current):
+        if(self.left.filename==baba):
+            self.left.addfull(current)
+        if(self.middle.filename==baba):
+            self.middle.addfull(current)
+        if(self.right.filename==baba):
+            self.right.addfull(current)
+
+t= Tree(1)
+t.addfull(2)
+t.addfull(3)
+t.addfull(4)
+t1=Tree(5,2)
+t.findparent(t1.parent,t1.filename)
+t1=Tree(10,2)
+t.findparent(t1.parent,t1.filename)
+t1=Tree(11,3)
+t.findparent(t1.parent,t1.filename)
+print(t)
+print(t.left)
+print(t.middle)
+print(t.right)
+print(t.left.left)
+print(t.left.middle)
+print(t.left.right)
+print(t.middle.left)
+print(t.middle.middle)
+print(t.middle.right)
