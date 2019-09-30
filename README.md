@@ -9,6 +9,6 @@ Self-avoid walking with Java in GUI, enter the length for SAW and points will li
 
 # Sample
 
-<div><img src="https://github.com/Kasim-An/cosc-3p91/blob/master/sampleoutput.jpg"></div>
+<div><img src="https://github.com/Kasim-An/cosc-2p05/blob/master/sampleoutput.jpg"></div>
 
-<div><img src="https://github.com/Kasim-An/cosc-3p91/blob/master/assign3output.jpg"></div>
+<div><img src="https://github.com/Kasim-An/cosc-2p05/blob/master/assign3output.jpg"></div>
