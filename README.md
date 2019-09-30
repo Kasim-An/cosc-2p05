@@ -8,7 +8,9 @@ Story editor with Python, it has editor to write story and control page up and d
 Self-avoid walking with Java in GUI, enter the length for SAW and points will link together, it can also increase or decrease board size.
 
 # Sample
+Assign1
 
 <div><img src="https://github.com/Kasim-An/cosc-2p05/blob/master/sampleoutput.jpg"></div>
 
+Assign3
 <div><img src="https://github.com/Kasim-An/cosc-2p05/blob/master/assign3output.jpg"></div>
